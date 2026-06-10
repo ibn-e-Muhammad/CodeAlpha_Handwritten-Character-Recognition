@@ -58,9 +58,48 @@ def build_model_v2(input_shape=(28, 28, 1), num_classes=47):
     ])
     return model
 
-# Default build_model points to V2
+# =====================================================================
+# V3 Architecture (Cloud-Tier 3-Stage VGG + BatchNorm + Flatten Fix)
+# Target: Production API Default
+# =====================================================================
+def build_model_v3(input_shape=(28, 28, 1), num_classes=47):
+    model = Sequential([
+        # --- Stage 1 ---
+        Conv2D(32, kernel_size=(3, 3), activation='relu', padding='same', input_shape=input_shape),
+        BatchNormalization(),
+        Conv2D(32, kernel_size=(3, 3), activation='relu', padding='same'),
+        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 2)),
+        Dropout(0.25),
+        
+        # --- Stage 2 ---
+        Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2D(64, kernel_size=(3, 3), activation='relu', padding='same'),
+        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 2)),
+        Dropout(0.25),
+        
+        # --- Stage 3 (Cloud Upgrade) ---
+        Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'),
+        BatchNormalization(),
+        Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'),
+        BatchNormalization(),
+        MaxPooling2D(pool_size=(2, 2)),
+        Dropout(0.30),
+        
+        # --- Classification Head ---
+        Flatten(),
+        Dense(512, activation='relu'),
+        BatchNormalization(),
+        Dropout(0.50),
+        Dense(num_classes, activation='softmax')
+    ])
+    return model
+
+# Default build_model points to V3
 def build_model(input_shape=(28, 28, 1), num_classes=47):
-    return build_model_v2(input_shape, num_classes)
+    return build_model_v3(input_shape, num_classes)
 
 if __name__ == '__main__':
     model = build_model_v2(input_shape=(config.IMG_ROWS, config.IMG_COLS, config.CHANNELS), 

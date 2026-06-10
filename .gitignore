@@ -1,18 +1,31 @@
-# Python Artifacts
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-.ipynb_checkpoints/
+*.py[cod]
+*$py.class
+
+# Python virtual environment
 venv/
+env/
 .env/
 
-# Datasets and Binaries
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Kaggle Output Directories
+/kaggle/
+
+# Heavy Datasets and Extracted Archives (Block raw tensors)
+*.csv
+*.npy
+*.zip
+*.gz
 pipeline_vision/data/*.csv
 pipeline_vision/data/*.npy
 pipeline_vision/data/*.txt
-pipeline_vision/data/*.png
 pipeline_vision/data/*.json
 pipeline_vision/data/emnist_source_files/*
 
-# Explicit Whitelists
-!models/
-!pipeline_vision/data/plots/
+
+# Explicit Whitelists for Production
+!models/*.keras
+!pipeline_vision/data/plots/*

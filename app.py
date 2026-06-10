@@ -11,14 +11,14 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 import config
 
-from model import build_model_v2
+from model import build_model_v3
 
 # Cache the model to prevent reload on every UI interaction
 @st.cache_resource
 def load_assets():
-    model_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn_v2.keras')
+    model_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn_v3.keras')
     # Bypass Keras 3 serialization bugs by explicitly building architecture and loading weights
-    model = build_model_v2()
+    model = build_model_v3()
     model.load_weights(model_path)
     
     with open(config.MAPPING_JSON, 'r') as f:

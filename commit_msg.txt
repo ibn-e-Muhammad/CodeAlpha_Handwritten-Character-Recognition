@@ -1,9 +1,0 @@
-feat(pipeline-b): Implement Model V2 VGG-style optimization
-
-- Engineered a deeper VGG-style CNN topology with double-conv blocks and Batch Normalization.
-- Increased Dense head capacity to 512 units with 0.5 Dropout for improved fine-grained separation.
-- Scaled total trainable parameters from 229K to 1.69M to resolve confusable character bottlenecks.
-- Integrated ReduceLROnPlateau dynamic learning rate scheduler (factor 0.5, patience 3) for optimized convergence.
-- Achieved robust 90.00% validation accuracy on 47-class EMNIST Balanced test set, outperforming the 88.37% V1 baseline.
-- Updated Streamlit frontend inference logic to dynamically load new V2 weights.
-- Appended comprehensive epoch telemetry and V2 confusion matrix visually to ReadMe.md documentation.

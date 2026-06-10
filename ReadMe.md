@@ -162,3 +162,56 @@ A high-accuracy 2D Convolutional Neural Network (CNN) to classify handwritten al
 - The thicker 512 Dense bottleneck and BatchNormalization allowed precise mapping of challenging alphanumeric topological boundaries.
 
 ![Confusion Matrix V2](pipeline_vision/data/plots/confusion_matrix_v2.png)
+
+## [2026-06-10] Model Iteration V3: Cloud-Tier 3-Stage VGG (Kaggle Tesla T4 GPU)
+
+- **Objective**: Target 91%+ validation accuracy and solve the structural case-sensitive bounds (F/f, l/1/I) using cloud computing resources.
+- **Data Augmentation**: Deployed `ImageDataGenerator` with real-time stroke-invariant distortion (rotation ±8°, zoom/shift ±8%) to forcefully break the spatial dependencies. Flips are locked out to protect character identities.
+- **Architectural Shift (3-Stage VGG-Style)**: 
+  - Stage 1: `Conv2D(32)` → `BatchNorm` → `Conv2D(32)` → `BatchNorm` → `MaxPool` → `Dropout(0.25)`
+  - Stage 2: `Conv2D(64)` → `BatchNorm` → `Conv2D(64)` → `BatchNorm` → `MaxPool` → `Dropout(0.25)`
+  - Stage 3: `Conv2D(128)` → `BatchNorm` → `Conv2D(128)` → `BatchNorm` → `MaxPool` → `Dropout(0.30)`
+  - Head: `Flatten` (1152 units) → `Dense(512)` → `BatchNorm` → `Dropout(0.50)` → `Dense(47)`
+  - **Efficiency Insight**: The deeper pooling matrix shrunk the Flatten transition, meaning V3 operates with **~880K parameters**, which is nearly 50% leaner than V2 (1.69M). This permits deeper extraction without dimensional explosion.
+- **Infrastructure Overhaul**:
+  - Remapped target structures natively to `/kaggle/input/emnist/`.
+  - Batch Size scaled dynamically to **256** to maximize the 16GB VRAM on the NVIDIA T4.
+  - Callbacks bound to `/kaggle/working/` to auto-export `training_log_v3.csv` and `handwritten_character_cnn_v3.keras`.
+- **Status**: Executed & Verified on Kaggle.
+
+### [2026-06-10] Model Iteration V3: Cloud-Tier Augmentation & Production Sign-Off
+
+| Epoch | Train Loss | Train Accuracy | Val Loss | Val Accuracy |
+|---|---|---|---|---|
+| 01 | 1.0923 | 68.08% | 2.3439 | 37.01% |
+| 02 | 0.5080 | 82.40% | 0.3585 | 87.58% |
+| 03 | 0.4326 | 84.70% | 0.3491 | 88.22% |
+| 04 | 0.3983 | 85.80% | 0.3268 | 88.25% |
+| 05 | 0.3753 | 86.44% | 0.3168 | 88.74% |
+| 06 | 0.3583 | 86.89% | 0.3102 | 88.64% |
+| 07 | 0.3497 | 87.17% | 0.3167 | 88.92% |
+| 08 | 0.3405 | 87.49% | 0.3445 | 87.73% |
+| 09 | 0.3147 | 88.35% | 0.2888 | 89.77% |
+| 10 | 0.3032 | 88.63% | 0.2915 | 89.42% |
+| 11 | 0.3000 | 88.76% | 0.2959 | 89.29% |
+| 12 | 0.2879 | 89.15% | 0.2840 | 89.88% |
+| 13 | 0.2845 | 89.26% | 0.2858 | 89.64% |
+| 14 | 0.2817 | 89.30% | 0.2763 | 90.07% |
+| 15 | 0.2773 | 89.47% | 0.2841 | 89.57% |
+| 16 | 0.2736 | 89.55% | 0.2824 | 89.73% |
+| 17 | 0.2680 | 89.91% | 0.2746 | 90.01% |
+| 18 | 0.2649 | 89.91% | 0.2713 | 90.15% |
+| 19 | 0.2626 | 89.96% | 0.2761 | 90.05% |
+| 20 | 0.2616 | 90.01% | 0.2726 | 90.05% |
+| 21 | 0.2596 | 90.13% | 0.2701 | 90.32% |
+| 22 | 0.2565 | 90.19% | 0.2695 | 90.31% |
+| 23 | 0.2564 | 90.20% | 0.2689 | 90.37% |
+| 24 | 0.2549 | 90.19% | 0.2710 | 90.20% |
+| 25 | 0.2554 | 90.17% | 0.2706 | 90.31% |
+
+- **Final Evaluation Metrics**:
+  - Global Test Accuracy: **90.00%**
+  - Macro Precision: **91.00%**
+  - Validation Loss Stabilized: **0.2689** (Best epoch: 23)
+
+*This represents a major milestone: the Cloud-Tier 3-Stage VGG model achieved robust convergence using deep feature extraction and rigorous image augmentation.*
