@@ -103,3 +103,62 @@ A high-accuracy 2D Convolutional Neural Network (CNN) to classify handwritten al
 ---
 **SIGN-OFF DECLARATION**:
 `Handwritten Character Recognition` is officially completed, closed, and secured.
+
+## [2026-06-10] Model Iteration V2: Adaptive VGG-Style Optimization Architecture
+
+- **Objective**: Push past the 88.37% V1 baseline to target 91%+ validation accuracy on 47-class EMNIST Balanced.
+- **V1 Bottleneck Diagnosis**: Identified confusable character pairs (O/0, l/1/I, q/9/g, F/f) as the primary accuracy ceiling via classification report analysis.
+- **Architectural Upgrade (VGG-Style Double-Conv Blocks)**:
+  - **Stack 1**: `Conv2D(32, same)` → `BatchNorm` → `Conv2D(32, same)` → `BatchNorm` → `MaxPool(2,2)` → `Dropout(0.25)`
+  - **Stack 2**: `Conv2D(64, same)` → `BatchNorm` → `Conv2D(64, same)` → `BatchNorm` → `MaxPool(2,2)` → `Dropout(0.25)`
+  - **Head**: `Flatten` → `Dense(512)` → `BatchNorm` → `Dropout(0.5)` → `Dense(47, softmax)`
+  - Total Params: 1,698,063 | Trainable Params: 1,696,655 (Driven by the flattened transition to the Dense 512 head).
+- **ReduceLROnPlateau Dynamic Scheduler**:
+  - Monitors `val_loss`. When the validation loss plateaus for 3 consecutive epochs, the learning rate is halved (`factor=0.5`), with a floor of `min_lr=1e-6`.
+  - This allows the optimizer to escape shallow loss basins that flat learning rates cannot navigate.
+- **Callback Stack**: `EarlyStopping(patience=5)` + `ModelCheckpoint(v2.keras)` + `CSVLogger(training_log_v2.csv)` + `ReduceLROnPlateau(patience=3)`.
+- **Training Configuration**: `Adam(lr=0.001)`, `EPOCHS=25`, `BATCH_SIZE=64`.
+- **Manual Execution Instructions**:
+  ```bash
+  python3 src/model.py      # Verify V2 architecture compiles and exports summary
+  python3 src/train.py      # Execute the full GPU-accelerated training loop
+  python3 src/evaluate.py   # Generate V2 classification report and confusion matrix
+  streamlit run app.py      # Launch interactive frontend with V2 weights
+  ```
+- **Status**: Executed & Verified.
+
+### V2 Execution Telemetry & Results
+
+| Epoch | Train Loss | Train Accuracy | Val Loss | Val Accuracy | Current Learning Rate |
+|---|---|---|---|---|---|
+| 01 | 0.7044 | 77.87% | 0.4516 | 85.13% | 0.001000 |
+| 02 | 0.4356 | 84.89% | 0.3847 | 86.78% | 0.001000 |
+| 03 | 0.3897 | 86.20% | 0.3381 | 88.15% | 0.001000 |
+| 04 | 0.3609 | 87.07% | 0.3690 | 87.38% | 0.001000 |
+| 05 | 0.3385 | 87.65% | 0.3154 | 88.45% | 0.001000 |
+| 06 | 0.3249 | 88.09% | 0.3232 | 88.53% | 0.001000 |
+| 07 | 0.3097 | 88.44% | 0.3142 | 88.60% | 0.001000 |
+| 08 | 0.2966 | 88.89% | 0.3104 | 89.11% | 0.001000 |
+| 09 | 0.2855 | 89.21% | 0.3078 | 89.19% | 0.001000 |
+| 10 | 0.2768 | 89.46% | 0.3066 | 89.48% | 0.001000 |
+| 11 | 0.2663 | 89.75% | 0.3095 | 89.34% | 0.001000 |
+| 12 | 0.2581 | 89.95% | 0.2942 | 89.82% | 0.001000 |
+| 13 | 0.2537 | 90.19% | 0.2942 | 89.72% | 0.001000 |
+| 14 | 0.2463 | 90.44% | 0.2949 | 89.60% | 0.001000 |
+| 15 | 0.2392 | 90.53% | 0.3026 | 89.84% | 0.001000 |
+| 16 | 0.2138 | 91.45% | **0.2896** | **90.29%** | 0.000500 |
+| 17 | 0.2061 | 91.80% | 0.2909 | 89.98% | 0.000500 |
+| 18 | 0.1994 | 91.98% | 0.2967 | 90.14% | 0.000500 |
+| 19 | 0.1941 | 92.22% | 0.2950 | 90.16% | 0.000500 |
+| 20 | 0.1822 | 92.59% | 0.2976 | 90.09% | 0.000250 |
+| 21 | 0.1750 | 92.92% | 0.2973 | 90.20% | 0.000250 |
+
+- **Hardware Trigger**: Training terminated early at Epoch 21 via EarlyStopping (patience=5 reached, best weights serialized at Epoch 16).
+- **Scheduler Impact**: `ReduceLROnPlateau` successfully triggered twice and navigated the validation loss basins, avoiding catastrophic divergence.
+
+### Global Evaluation Metrics (Test Set - 18,800 Samples)
+- **Overall Accuracy: 90.00%** (A robust jump from 88.37% in V1, validating the VGG architecture scale-up).
+- **Macro Avg**: Precision (0.90), Recall (0.90), F1-Score (0.90).
+- The thicker 512 Dense bottleneck and BatchNormalization allowed precise mapping of challenging alphanumeric topological boundaries.
+
+![Confusion Matrix V2](pipeline_vision/data/plots/confusion_matrix_v2.png)

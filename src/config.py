@@ -17,7 +17,7 @@ CHANNELS = 1
 # Hyperparameters
 NUM_CLASSES = 47
 BATCH_SIZE = 64
-EPOCHS = 15
+EPOCHS = 25
 
 # Export Paths
 X_TRAIN_NPY = os.path.join(DATA_DIR, 'x_train.npy')
