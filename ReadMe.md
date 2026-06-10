@@ -102,4 +102,4 @@ A high-accuracy 2D Convolutional Neural Network (CNN) to classify handwritten al
 
 ---
 **SIGN-OFF DECLARATION**:
-Pipeline B (Handwritten Character Recognition) is officially completed, closed, and secured.
+`Handwritten Character Recognition` is officially completed, closed, and secured.
