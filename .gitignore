@@ -29,3 +29,4 @@ pipeline_vision/data/emnist_source_files/*
 # Explicit Whitelists for Production
 !models/*.keras
 !pipeline_vision/data/plots/*
+!pipeline_vision/data/mapping.json

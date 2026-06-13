@@ -16,6 +16,9 @@ from model import build_model_v1, build_model_v2, build_model_v3
 # Cache the models to prevent reload on every UI interaction
 @st.cache_resource
 def load_assets():
+    # Fix Keras 3 Thread-Local NameScope Bug inside Streamlit cache
+    tf.keras.backend.clear_session()
+    
     # Load V1
     model_v1_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn.keras')
     model_v1 = build_model_v1()
