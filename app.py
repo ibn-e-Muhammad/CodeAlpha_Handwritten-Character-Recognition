@@ -11,21 +11,32 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 import config
 
-from model import build_model_v3
+from model import build_model_v1, build_model_v2, build_model_v3
 
-# Cache the model to prevent reload on every UI interaction
+# Cache the models to prevent reload on every UI interaction
 @st.cache_resource
 def load_assets():
-    model_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn_v3.keras')
-    # Bypass Keras 3 serialization bugs by explicitly building architecture and loading weights
-    model = build_model_v3()
-    model.load_weights(model_path)
+    # Load V1
+    model_v1_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn.keras')
+    model_v1 = build_model_v1()
+    model_v1.load_weights(model_v1_path)
+
+    # Load V2
+    model_v2_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn_v2.keras')
+    model_v2 = build_model_v2()
+    model_v2.load_weights(model_v2_path)
+
+    # Load V3
+    model_v3_path = os.path.join(config.BASE_DIR, 'models', 'handwritten_character_cnn_v3.keras')
+    model_v3 = build_model_v3()
+    model_v3.load_weights(model_v3_path)
     
     with open(config.MAPPING_JSON, 'r') as f:
         mapping = json.load(f)
-    return model, mapping
+        
+    return model_v1, model_v2, model_v3, mapping
 
-model, mapping = load_assets()
+model_v1, model_v2, model_v3, mapping = load_assets()
 
 def process_and_predict(image_array):
     # Convert to PIL Image for robust preprocessing without OpenCV
@@ -49,15 +60,27 @@ def process_and_predict(image_array):
     # Reshape for structural input metric (1, 28, 28, 1)
     input_tensor = normalized.reshape(1, 28, 28, 1)
     
-    # Live MLOps Inference
-    preds = model.predict(input_tensor)
-    pred_idx = np.argmax(preds[0])
-    confidence = preds[0][pred_idx] * 100
+    # Live MLOps Inference for all 3 models
+    preds_v1 = model_v1.predict(input_tensor)
+    pred_idx_v1 = np.argmax(preds_v1[0])
+    conf_v1 = preds_v1[0][pred_idx_v1] * 100
+    char_v1 = mapping[str(pred_idx_v1)]
+
+    preds_v2 = model_v2.predict(input_tensor)
+    pred_idx_v2 = np.argmax(preds_v2[0])
+    conf_v2 = preds_v2[0][pred_idx_v2] * 100
+    char_v2 = mapping[str(pred_idx_v2)]
+
+    preds_v3 = model_v3.predict(input_tensor)
+    pred_idx_v3 = np.argmax(preds_v3[0])
+    conf_v3 = preds_v3[0][pred_idx_v3] * 100
+    char_v3 = mapping[str(pred_idx_v3)]
     
-    # Parse output using mapping.json translation key
-    predicted_char = mapping[str(pred_idx)]
-    
-    return predicted_char, confidence, normalized
+    return {
+        "v1": {"char": char_v1, "conf": conf_v1},
+        "v2": {"char": char_v2, "conf": conf_v2},
+        "v3": {"char": char_v3, "conf": conf_v3}
+    }, normalized
 
 st.title("Handwritten Character Recognition")
 st.write("Interactive multi-class alphanumeric visualization dashboard.")
@@ -79,10 +102,23 @@ with tab1:
     
     if st.button("Predict from Canvas"):
         if canvas_result.image_data is not None:
-            char, conf, processed_img = process_and_predict(canvas_result.image_data)
-            st.success(f"Model Prediction: **{char}**")
-            st.info(f"Confidence Level: {conf:.2f}%")
+            results, processed_img = process_and_predict(canvas_result.image_data)
+            
             st.image(processed_img, caption="Preprocessed Normalized Tensor (28x28)", width=150)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.info("### V1 (Baseline)")
+                st.success(f"**{results['v1']['char']}**")
+                st.write(f"{results['v1']['conf']:.2f}%")
+            with col2:
+                st.info("### V2 (VGG-Style)")
+                st.success(f"**{results['v2']['char']}**")
+                st.write(f"{results['v2']['conf']:.2f}%")
+            with col3:
+                st.info("### V3 (Cloud-Tier)")
+                st.success(f"**{results['v3']['char']}**")
+                st.write(f"{results['v3']['conf']:.2f}%")
 
 with tab2:
     uploaded_file = st.file_uploader("Upload an image...", type=["png", "jpg", "jpeg"])
@@ -92,7 +128,20 @@ with tab2:
         
         if st.button("Predict from Upload"):
             img_array = np.array(image)
-            char, conf, processed_img = process_and_predict(img_array)
-            st.success(f"Model Prediction: **{char}**")
-            st.info(f"Confidence Level: {conf:.2f}%")
+            results, processed_img = process_and_predict(img_array)
+            
             st.image(processed_img, caption="Preprocessed Normalized Tensor (28x28)", width=150)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.info("### V1 (Baseline)")
+                st.success(f"**{results['v1']['char']}**")
+                st.write(f"{results['v1']['conf']:.2f}%")
+            with col2:
+                st.info("### V2 (VGG-Style)")
+                st.success(f"**{results['v2']['char']}**")
+                st.write(f"{results['v2']['conf']:.2f}%")
+            with col3:
+                st.info("### V3 (Cloud-Tier)")
+                st.success(f"**{results['v3']['char']}**")
+                st.write(f"{results['v3']['conf']:.2f}%")
